@@ -1,0 +1,35 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: document-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/judgment_analyzer}
+    username: ${SPRING_DATASOURCE_USERNAME:judgment}
+    password: ${SPRING_DATASOURCE_PASSWORD:judgment}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    schemas: documents
+    default-schema: documents
+    create-schemas: true
+  servlet:
+    multipart:
+      max-file-size: "${MAX_UPLOAD_MB:25}MB"
+      max-request-size: "${MAX_UPLOAD_MB:25}MB"
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+app:
+  internal-key: ${INTERNAL_SERVICE_KEY:}
+  storage-dir: ${DOCUMENT_STORAGE_DIR:/var/lib/judgments}
+  max-upload-mb: ${MAX_UPLOAD_MB:25}
+  max-pdf-pages: ${MAX_PDF_PAGES:500}
+  ingestion-url: ${INGESTION_URL:http://localhost:8091}
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level correlation_id=%X{correlationId:-missing} %logger - %msg%n"

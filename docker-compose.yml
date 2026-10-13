@@ -1,0 +1,174 @@
+name: judgment-analyzer
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?copy .env.example to .env and set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [internal]
+
+  auth-service:
+    build: ./auth-service
+    env_file: .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [internal]
+
+  document-service:
+    build: ./document-service
+    env_file: .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      INGESTION_URL: http://ai-ingestion-service:8091
+    volumes: [uploads:/var/lib/judgments]
+    depends_on:
+      postgres: { condition: service_healthy }
+      ai-ingestion-service: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [internal]
+
+  query-service:
+    build: ./query-service
+    env_file: .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      DOCUMENT_SERVICE_URL: http://document-service:8082
+      LLM_PROVIDER_ORDER: ${LLM_PROVIDER_ORDER}
+      TEST_FAKE_LLM: ${TEST_FAKE_LLM:false}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODEL: ${GROQ_MODEL}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY}
+      NVIDIA_MODEL: ${NVIDIA_MODEL}
+      HF_API_KEY: ${HF_API_KEY}
+      HF_MODEL: ${HF_MODEL}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL}
+      RAG_SERVICE_URL: http://ai-rag-service:8092
+    depends_on:
+      postgres: { condition: service_healthy }
+      document-service: { condition: service_healthy }
+      ai-rag-service: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [internal]
+
+  ai-ingestion-service:
+    build:
+      context: .
+      dockerfile: ai-ingestion-service/Dockerfile
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DOCUMENT_SERVICE_URL: http://document-service:8082
+      LLM_PROVIDER_ORDER: ${LLM_PROVIDER_ORDER}
+      TEST_FAKE_LLM: ${TEST_FAKE_LLM:false}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODEL: ${GROQ_MODEL}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY}
+      NVIDIA_MODEL: ${NVIDIA_MODEL}
+      HF_API_KEY: ${HF_API_KEY}
+      HF_MODEL: ${HF_MODEL}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL}
+    volumes: [uploads:/var/lib/judgments:ro]
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8091/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [internal]
+
+  ai-rag-service:
+    build:
+      context: .
+      dockerfile: ai-rag-service/Dockerfile
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      LLM_PROVIDER_ORDER: ${LLM_PROVIDER_ORDER}
+      TEST_FAKE_LLM: ${TEST_FAKE_LLM:false}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODEL: ${GROQ_MODEL}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY}
+      NVIDIA_MODEL: ${NVIDIA_MODEL}
+      HF_API_KEY: ${HF_API_KEY}
+      HF_MODEL: ${HF_MODEL}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL}
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8092/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [internal]
+
+  api-gateway:
+    build: ./api-gateway
+    env_file: .env
+    depends_on:
+      auth-service: { condition: service_healthy }
+      document-service: { condition: service_healthy }
+      query-service: { condition: service_healthy }
+    networks: [internal, edge]
+
+  frontend:
+    build: ./frontend
+    depends_on: [api-gateway]
+    ports: ["80:80"]
+    networks: [edge]
+
+volumes:
+  postgres_data:
+  uploads:
+networks:
+  internal:
+    internal: true
+  edge:

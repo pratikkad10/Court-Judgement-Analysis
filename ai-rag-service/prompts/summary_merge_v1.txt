@@ -1,0 +1,1 @@
+Merge supplied section summaries into concise Facts, Issues, Arguments, Reasoning, Holding, and Final Order fields. Use only supplied text and preserve source markers.

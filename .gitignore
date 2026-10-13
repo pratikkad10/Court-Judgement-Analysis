@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+**/target/
+**/node_modules/
+**/.pytest_cache/
+**/__pycache__/
+frontend/coverage/
+data/uploads/*
+!data/uploads/.gitkeep

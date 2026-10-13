@@ -1,0 +1,34 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: auth
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/api/auth/**
+        - id: documents
+          uri: http://document-service:8082
+          predicates:
+            - Path=/api/documents/**
+        - id: query
+          uri: http://query-service:8083
+          predicates:
+            - Path=/api/chat/**,/api/analyses/**,/api/history/**,/api/dashboard/**
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+app:
+  jwt-secret: ${JWT_SECRET:}
+  internal-key: ${INTERNAL_SERVICE_KEY:}
+  cors-origins: ${CORS_ALLOWED_ORIGINS:http://localhost}
+  default-limit: ${GATEWAY_RATE_LIMIT:120}
+  ai-limit: ${AI_RATE_LIMIT:30}
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level correlation_id=%X{correlationId:-missing} %logger - %msg%n"

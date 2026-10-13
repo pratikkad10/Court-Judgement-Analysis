@@ -1,0 +1,1 @@
+"""AI ingestion service package."""

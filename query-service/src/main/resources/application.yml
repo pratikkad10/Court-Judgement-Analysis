@@ -1,0 +1,29 @@
+server:
+  port: 8083
+spring:
+  application:
+    name: query-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/judgment_analyzer}
+    username: ${SPRING_DATASOURCE_USERNAME:judgment}
+    password: ${SPRING_DATASOURCE_PASSWORD:judgment}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    schemas: query
+    default-schema: query
+    create-schemas: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+app:
+  internal-key: ${INTERNAL_SERVICE_KEY:}
+  document-service-url: ${DOCUMENT_SERVICE_URL:http://localhost:8082}
+  rag-service-url: ${RAG_SERVICE_URL:http://localhost:8092}
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level correlation_id=%X{correlationId:-missing} %logger - %msg%n"

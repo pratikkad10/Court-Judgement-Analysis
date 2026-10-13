@@ -1,0 +1,1 @@
+Extract court, case number, judgment date and named parties from this court judgment text. Return only JSON matching the requested schema. Do not infer missing values.

@@ -1,0 +1,1 @@
+Extract petitioner arguments, respondent arguments and court findings from only the supplied chunks. Return valid JSON matching the requested schema. Each item must reference a source marker. Do not infer a party position that is absent.

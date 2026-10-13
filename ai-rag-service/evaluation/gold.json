@@ -1,0 +1,22 @@
+[
+  {"question":"What did the petitioner challenge?","expected_page":1},
+  {"question":"What was the respondent's argument?","expected_page":1},
+  {"question":"What were the issues?","expected_page":1},
+  {"question":"Was the licensing order lawful?","expected_page":2},
+  {"question":"Why did the Court reject the order?","expected_page":2},
+  {"question":"Did delay defeat the claim?","expected_page":2},
+  {"question":"What was the holding?","expected_page":2},
+  {"question":"What final order was made?","expected_page":2},
+  {"question":"Was the matter remanded?","expected_page":2},
+  {"question":"What authority failed to give reasons?","expected_page":2},
+  {"question":"What was case number?","expected_page":1},
+  {"question":"Which court heard the matter?","expected_page":1},
+  {"question":"What kind of order was challenged?","expected_page":1},
+  {"question":"What was the delay issue?","expected_page":1},
+  {"question":"Did the appeal succeed?","expected_page":2},
+  {"question":"What relief did the petitioner seek?","expected_page":1},
+  {"question":"What did the court require on remand?","expected_page":2},
+  {"question":"What was the court's reasoning on delay?","expected_page":2},
+  {"question":"Which decision was set aside?","expected_page":2},
+  {"question":"What constitutional claim was mentioned?","expected_page":2}
+]

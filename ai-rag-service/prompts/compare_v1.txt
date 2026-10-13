@@ -1,0 +1,1 @@
+Compare the supplied per-judgment reasoning only on the stated issue. Return valid JSON matching the requested schema. Use only supplied context and do not invent citations.
